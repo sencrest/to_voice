@@ -25,6 +25,7 @@ URL = args.url
 
 client = AipSpeech(APP_ID, API_KEY, SECRET_KEY)
 
+
 def text_to_voice(text):
     file_name = str(uuid.uuid1()) + '.mp3'
     result = client.synthesis(text, 'zh', 3, {
@@ -37,39 +38,46 @@ def text_to_voice(text):
             f.write(result)
     return file_name
 
+
 def get_text(url):
-    g = Goose({'stopwords_class': StopWordsChinese})
+    # g = Goose({'stopwords_class': StopWordsChinese})
+    g = Goose({'use_meta_language': False, 'target_language': 'zh_cn'})
     article = g.extract(url=url)
+    print(article.title)
     return article.cleaned_text
+
 
 # 合并音频文件
 def merge_voice(file_list):
     voice_dict = {}
     song = None
-    for i,f in enumerate(file_list):
+    for i, f in enumerate(file_list):
         if i == 0:
-            song = AudioSegment.from_file(f,"mp3")
+            song = AudioSegment.from_file(f, "mp3")
         else:
             # 拼接音频文件
-            song += AudioSegment.from_file(f,"mp3")
+            song += AudioSegment.from_file(f, "mp3")
         # 删除临时音频
         os.unlink(f)
- 
+
     # 导出合并后的音频文件，格式为MP3格式
     file_name = str(uuid.uuid1()) + ".mp3"
     song.export(file_name, format="mp3")
     return file_name
 
+
 if __name__ == "__main__":
-    # url = "http://news.china.com/socialgd/10000169/20180616/32537640_all.html"
-    text = get_text(URL)
+    url = "http://news.china.com/socialgd/10000169/20180616/32537640_all.html"
+    text = get_text(url)
+
+    # text = get_text(URL)
 
     # 将文本按 500 的长度分割成多个文本
-    text_list = [text[i:i+500] for i in range(0, len(text), 500)]
+    text_list = [text[i:i + 500] for i in range(0, len(text), 500)]
     file_list = []
     for t in text_list:
         file_list.append(text_to_voice(t))
-    # print(file_list)
+    print(file_list)
     final_voice = merge_voice(file_list)
     print(final_voice)
     # 播放音频
